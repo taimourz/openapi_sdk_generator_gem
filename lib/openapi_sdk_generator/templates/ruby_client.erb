@@ -1,0 +1,87 @@
+require 'net/http'
+require 'json'
+require 'uri'
+
+class APIClient
+  attr_reader :base_url, :headers
+  
+  def initialize(base_url = '<%= parser.base_url %>', api_key: nil)
+    @base_url = base_url
+    @headers = {
+      'Content-Type' => 'application/json',
+      'Accept' => 'application/json'
+    }
+    @headers['Authorization'] = "Bearer #{api_key}" if api_key
+  end
+  
+  <% parser.endpoints.each do |endpoint| %>
+  # <%= endpoint[:summary] %>
+  # <%= endpoint[:description] %>
+  <%- params = endpoint[:parameters] || [] -%>
+  <%- query_params = params.select { |p| p[:location] == 'query' } -%>
+  <%- path_params = params.select { |p| p[:location] == 'path' } -%>
+  def <%= method_name(endpoint) %>(<%= format_method_params(endpoint) %>)
+    <%- if path_params.any? -%>
+    path = "<%= endpoint[:path] %>"
+    <%- path_params.each do |param| -%>
+    path = path.gsub('{<%= param[:name] %>}', <%= sanitize_name(param[:name]) %>.to_s)
+    <%- end -%>
+    <%- else -%>
+    path = "<%= endpoint[:path] %>"
+    <%- end -%>
+    
+    <%- if query_params.any? -%>
+    query_params = {}
+    <%- query_params.each do |param| -%>
+    query_params['<%= param[:name] %>'] = <%= sanitize_name(param[:name]) %> if <%= sanitize_name(param[:name]) %>
+    <%- end -%>
+    path += "?#{URI.encode_www_form(query_params)}" unless query_params.empty?
+    <%- end -%>
+    
+    make_request('<%= endpoint[:method] %>', path<%= endpoint[:request_body] ? ', body: body' : '' %>)
+  end
+  <% end %>
+  
+  private
+  
+  def make_request(method, path, body: nil)
+    uri = URI.join(@base_url, path)
+    
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == 'https'
+    
+    request = case method.upcase
+    when 'GET'
+      Net::HTTP::Get.new(uri)
+    when 'POST'
+      Net::HTTP::Post.new(uri)
+    when 'PUT'
+      Net::HTTP::Put.new(uri)
+    when 'DELETE'
+      Net::HTTP::Delete.new(uri)
+    when 'PATCH'
+      Net::HTTP::Patch.new(uri)
+    else
+      raise "Unsupported HTTP method: #{method}"
+    end
+    
+    @headers.each { |key, value| request[key] = value }
+    request.body = body.to_json if body
+    
+    response = http.request(request)
+    
+    case response
+    when Net::HTTPSuccess
+      response.body.empty? ? {} : JSON.parse(response.body)
+    else
+      raise "HTTP Error #{response.code}: #{response.body}"
+    end
+  end
+end
+
+<%- def format_method_params(endpoint)
+  params = endpoint[:parameters] || []
+  param_list = params.map { |p| sanitize_name(p[:name]) }
+  param_list << 'body: nil' if endpoint[:request_body]
+  param_list.join(', ')
+end -%>

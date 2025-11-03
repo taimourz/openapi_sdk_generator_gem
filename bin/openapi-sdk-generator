@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require_relative '../lib/openapi_sdk_generator'
+
+options = {}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: openapi-sdk-generator [options]"
+  opts.separator ""
+  opts.separator "Generate SDK from OpenAPI specification"
+  opts.separator ""
+  
+  opts.on("-i", "--input FILE", "OpenAPI specification file (JSON or YAML)") do |v|
+    options[:input] = v
+  end
+  
+  opts.on("-o", "--output DIR", "Output directory for generated SDK") do |v|
+    options[:output] = v
+  end
+  
+  opts.on("-l", "--language LANG", "Target language (ruby, javascript)") do |v|
+    options[:language] = v
+  end
+  
+  opts.on("-h", "--help", "Show this help message") do
+    puts opts
+    exit
+  end
+  
+  opts.on("-v", "--version", "Show version") do
+    puts "OpenAPI SDK Generator v0.1.0"
+    exit
+  end
+end
+
+begin
+  parser.parse!
+  
+  if options.empty?
+    puts parser
+    exit
+  end
+  
+  OpenapiSdkGenerator::CLI.new(options).run
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
+  puts "Error: #{e.message}"
+  puts parser
+  exit 1
+rescue OpenapiSdkGenerator::Error => e
+  puts "Error: #{e.message}"
+  exit 1
+rescue => e
+  puts "Unexpected error: #{e.message}"
+  puts e.backtrace.first(5)
+  exit 1
+end

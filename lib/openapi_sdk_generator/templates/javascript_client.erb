@@ -1,0 +1,102 @@
+/**
+ * <%= parser.api_title %>
+ * <%= parser.api_description %>
+ * Version: <%= parser.api_version %>
+ */
+
+class APIClient {
+  constructor(baseUrl = '<%= parser.base_url %>', apiKey = null) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    
+    if (apiKey) {
+      this.headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+  }
+  
+  <% parser.endpoints.each do |endpoint| %>
+  /**
+   * <%= endpoint[:summary] %>
+   * <%= endpoint[:description] %>
+   <%- params = endpoint[:parameters] || [] -%>
+   <%- params.each do |param| -%>
+   * @param {<%= js_type(param[:type]) %>} <%= sanitize_name(param[:name]) %> - <%= param[:description] %>
+   <%- end -%>
+   <%- if endpoint[:request_body] -%>
+   * @param {object} body - Request body
+   <%- end -%>
+   * @returns {Promise<object>}
+   */
+  async <%= js_method_name(endpoint) %>(<%= format_js_params(endpoint) %>) {
+    <%- path_params = params.select { |p| p[:location] == 'path' } -%>
+    <%- query_params = params.select { |p| p[:location] == 'query' } -%>
+    <%- if path_params.any? -%>
+    let path = '<%= endpoint[:path] %>';
+    <%- path_params.each do |param| -%>
+    path = path.replace('{<%= param[:name] %>}', <%= sanitize_name(param[:name]) %>);
+    <%- end -%>
+    <%- else -%>
+    let path = '<%= endpoint[:path] %>';
+    <%- end -%>
+    
+    <%- if query_params.any? -%>
+    const queryParams = new URLSearchParams();
+    <%- query_params.each do |param| -%>
+    if (<%= sanitize_name(param[:name]) %> !== undefined && <%= sanitize_name(param[:name]) %> !== null) {
+      queryParams.append('<%= param[:name] %>', <%= sanitize_name(param[:name]) %>);
+    }
+    <%- end -%>
+    
+    const queryString = queryParams.toString();
+    if (queryString) {
+      path += `?${queryString}`;
+    }
+    <%- end -%>
+    
+    return this.makeRequest('<%= endpoint[:method].upcase %>', path<%= endpoint[:request_body] ? ', body' : '' %>);
+  }
+  <% end %>
+  
+  async makeRequest(method, path, body = null) {
+    const url = `${this.baseUrl}${path}`;
+    
+    const options = {
+      method: method,
+      headers: this.headers
+    };
+    
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+    
+    try {
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP Error ${response.status}: ${errorText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      }
+      
+      return await response.text();
+    } catch (error) {
+      throw new Error(`Request failed: ${error.message}`);
+    }
+  }
+}
+
+module.exports = APIClient;
+
+<%- def format_js_params(endpoint)
+  params = endpoint[:parameters] || []
+  param_list = params.map { |p| sanitize_name(p[:name]) }
+  param_list << 'body = null' if endpoint[:request_body]
+  param_list.join(', ')
+end -%>

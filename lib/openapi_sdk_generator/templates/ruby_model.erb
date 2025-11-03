@@ -1,0 +1,29 @@
+# <%= @current_model[:name] %>
+class <%= camelize(@current_model[:name]) %>
+  <%- @current_model[:properties].each do |name, prop| -%>
+  attr_accessor :<%= sanitize_name(name) %>
+  <%- end -%>
+  
+  def initialize(attributes = {})
+    <%- @current_model[:properties].each do |name, prop| -%>
+    @<%= sanitize_name(name) %> = attributes['<%= name %>'] || attributes[:<%= sanitize_name(name) %>]
+    <%- end -%>
+  end
+  
+  def to_h
+    {
+      <%- @current_model[:properties].keys.each_with_index do |name, index| -%>
+      '<%= name %>' => @<%= sanitize_name(name) %><%= index < @current_model[:properties].keys.length - 1 ? ',' : '' %>
+      <%- end -%>
+    }
+  end
+  
+  def to_json(*args)
+    to_h.to_json(*args)
+  end
+  
+  def self.from_json(json)
+    data = JSON.parse(json)
+    new(data)
+  end
+end
