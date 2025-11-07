@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = "openapi_sdk_generator_gem"
-  s.version     = "0.1.0"
+  s.version     = "0.1.1"
   s.summary     = "Generate SDKs from OpenAPI specifications"
   s.description = "A lightweight tool to generate client SDKs in multiple languages from OpenAPI/Swagger specs"
   s.authors     = ["Taimour Afzal"]
