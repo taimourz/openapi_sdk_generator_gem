@@ -10,13 +10,13 @@ RSpec.describe OpenapiSdkGenerator::Parser do
     end
     
     it 'extracts API info' do
-      expect(parser.api_title).to eq('Petstore API')
+      expect(parser.api_title).to eq('Swagger Petstore')
       expect(parser.api_version).to eq('1.0.0')
-      expect(parser.api_description).to include('pet store')
+      expect(parser.api_description).to include('sample API')
     end
     
     it 'extracts base URL' do
-      expect(parser.base_url).to eq('https://petstore.swagger.io/v2')
+      expect(parser.base_url).to eq('http://petstore.swagger.io/api')
     end
   end
   
@@ -27,17 +27,18 @@ RSpec.describe OpenapiSdkGenerator::Parser do
     end
     
     it 'includes GET /pets endpoint' do
-      list_pets = parser.endpoints.find { |e| e[:operation_id] == 'listPets' }
+      list_pets = parser.endpoints.find { |e| e[:operation_id] == 'findPets' }
       expect(list_pets).not_to be_nil
       expect(list_pets[:method]).to eq('GET')
       expect(list_pets[:path]).to eq('/pets')
     end
     
-    it 'includes path parameters' do
-      get_pet = parser.endpoints.find { |e| e[:operation_id] == 'getPetById' }
+    it 'includes path parameters for GET /pets/{id}' do
+      get_pet = parser.endpoints.find { |e| e[:operation_id] == 'find pet by id' }
+      expect(get_pet).not_to be_nil
       expect(get_pet[:parameters]).to be_an(Array)
       
-      pet_id_param = get_pet[:parameters].find { |p| p[:name] == 'petId' }
+      pet_id_param = get_pet[:parameters].find { |p| p[:name] == 'id' }
       expect(pet_id_param).not_to be_nil
       expect(pet_id_param[:location]).to eq('path')
       expect(pet_id_param[:required]).to be true
@@ -59,6 +60,7 @@ RSpec.describe OpenapiSdkGenerator::Parser do
     it 'identifies required fields' do
       pet_model = parser.models['Pet']
       expect(pet_model[:required]).to include('name')
+      expect(pet_model[:required]).to include('id')
     end
   end
 end

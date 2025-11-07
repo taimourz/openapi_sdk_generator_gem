@@ -11,7 +11,7 @@ parser = OptionParser.new do |opts|
   opts.separator "Generate SDK from OpenAPI specification"
   opts.separator ""
   
-  opts.on("-i", "--input FILE", "OpenAPI specification file (JSON or YAML)") do |v|
+  opts.on("-i", "--input FILE_OR_URL", "OpenAPI specification file (JSON/YAML) or URL") do |v|
     options[:input] = v
   end
   
@@ -25,6 +25,13 @@ parser = OptionParser.new do |opts|
   
   opts.on("-h", "--help", "Show this help message") do
     puts opts
+    puts ""
+    puts "Examples:"
+    puts "  # From local file"
+    puts "  openapi-sdk-generator -i petstore.yaml -o ./output -l ruby"
+    puts ""
+    puts "  # From URL"
+    puts "  openapi-sdk-generator -i https://example.com/api-spec.yaml -o ./output -l javascript"
     exit
   end
   

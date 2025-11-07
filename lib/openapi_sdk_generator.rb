@@ -37,13 +37,20 @@ module OpenapiSdkGenerator
     
     private
     
-    def validate_options!
-      raise Error, "Input file is required" unless @options[:input]
-      raise Error, "Output directory is required" unless @options[:output]
-      raise Error, "Language is required (ruby or javascript)" unless @options[:language]
-      raise Error, "Input file not found" unless File.exist?(@options[:input])
+  def validate_options!
+    raise Error, "Input is required" unless @options[:input]
+    raise Error, "Output directory is required" unless @options[:output]
+    raise Error, "Language is required (ruby or javascript)" unless @options[:language]
+
+    unless url?(@options[:input]) || File.exist?(@options[:input])
+      raise Error, "Input must be a valid file path or URL"
     end
-    
+  end
+
+
+    def url?(value)
+      value.start_with?("http://", "https://")
+    end
     def create_generator(language, parser)
       case language.downcase
       when 'ruby'

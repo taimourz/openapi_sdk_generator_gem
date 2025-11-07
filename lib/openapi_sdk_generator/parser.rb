@@ -1,3 +1,7 @@
+require 'uri'
+require 'net/http'
+require 'openssl'
+
 module OpenapiSdkGenerator
   class Parser
     attr_reader :spec, :api_info, :base_url, :endpoints, :models
@@ -26,16 +30,73 @@ module OpenapiSdkGenerator
     private
     
     def load_spec
-      content = File.read(@file_path)
-      if @file_path.end_with?('.json')
+      content = fetch_content
+      parse_content(content)
+    rescue => e
+      raise Error, "Failed to load OpenAPI spec: #{e.message}"
+    end
+    
+    def fetch_content
+      if url?(@file_path)
+        fetch_from_url(@file_path)
+      else
+        fetch_from_file(@file_path)
+      end
+    end
+    
+    def url?(path)
+      path =~ /\A#{URI::DEFAULT_PARSER.make_regexp(%w[http https])}\z/
+    end
+    
+    def fetch_from_url(url)
+
+      uri = URI.parse(url)
+      
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == 'https')
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      
+      request = Net::HTTP::Get.new(uri.request_uri)
+      response = http.request(request)
+      
+      unless response.is_a?(Net::HTTPSuccess)
+        raise Error, "Failed to fetch URL: #{response.code} #{response.message}"
+      end
+      
+      response.body
+    rescue SocketError, Net::OpenTimeout, Net::ReadTimeout => e
+      raise Error, "Network error while fetching URL: #{e.message}"
+    end
+    
+    def fetch_from_file(file_path)
+      unless File.exist?(file_path)
+        raise Error, "File not found: #{file_path}"
+      end
+      File.read(file_path)
+    end
+    
+    def parse_content(content)
+      if looks_like_json?(content)
         JSON.parse(content)
-      elsif @file_path.end_with?('.yaml', '.yml')
+      elsif looks_like_yaml?(content)
         YAML.load(content)
       else
-        raise Error, "Unsupported file format. Use .json, .yaml, or .yml"
+        begin
+          JSON.parse(content)
+        rescue JSON::ParserError
+          YAML.load(content)
+        end
       end
-    rescue => e
+    rescue JSON::ParserError, Psych::SyntaxError => e
       raise Error, "Failed to parse OpenAPI spec: #{e.message}"
+    end
+    
+    def looks_like_json?(content)
+      content.strip.start_with?('{', '[')
+    end
+    
+    def looks_like_yaml?(content)
+      content =~ /^\w+:/
     end
     
     def parse_spec
@@ -120,16 +181,45 @@ module OpenapiSdkGenerator
     def parse_schemas
       components = @spec['components'] || {}
       schemas = components['schemas'] || {}
-      
+
       schemas.each do |name, schema|
+        resolved_schema = resolve_schema(schema)
+
         @models[name] = {
           name: name,
-          type: schema['type'],
-          properties: parse_properties(schema['properties']),
-          required: schema['required'] || []
+          type: resolved_schema['type'],
+          properties: parse_properties(resolved_schema['properties']),
+          required: resolved_schema['required'] || []
         }
       end
     end
+
+
+    def resolve_schema(schema)
+      if schema['$ref']
+        return resolve_schema(ref_to_schema(schema['$ref']))
+      end
+
+      if schema['allOf']
+        merged = { 'properties' => {}, 'required' => [] }
+
+        schema['allOf'].each do |subschema|
+          resolved = resolve_schema(subschema)
+          merged['properties'].merge!(resolved['properties'] || {})
+          merged['required'] |= (resolved['required'] || [])
+        end
+
+        return merged
+      end
+
+      schema
+    end  
+
+
+    def ref_to_schema(ref)
+      ref_path = ref.sub('#/components/schemas/', '')
+      @spec['components']['schemas'][ref_path]
+    end  
     
     def parse_properties(properties)
       return {} unless properties
