@@ -1,6 +1,6 @@
-        # Petstore API
+        # Swagger Petstore
         
-        A sample API for managing a pet store
+        A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification
         
         Version: 1.0.0
         
@@ -16,14 +16,13 @@ const APIClient = require('./client');
 
 
 // Example usage
-    // List all pets
-    // const response = await client.listpets(...);
+    // 
+    // const response = await client.findpets(...);
 
 
 ## Available Methods
         
-        - `listpets()` - List all pets
-- `createpet()` - Create a pet
-- `getpetbyid()` - Get a pet by ID
-- `updatepet()` - Update a pet
-- `deletepet()` - Delete a pet
+        - `findpets()` - 
+- `addpet()` - 
+- `findPetById()` - 
+- `deletepet()` - 

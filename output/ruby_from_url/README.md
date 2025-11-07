@@ -15,7 +15,7 @@ gem 'your_gem_name'
 ```ruby
 require_relative 'client'
 
-client = APIClient.new('https://petstore.swagger.io/v2')
+client = APIClient.new('http://petstore.swagger.io/api')
 
 # Example usage
 # 

@@ -1,1 +1,1 @@
-{"name":"petstore-api","version":"1.0.0","description":"A sample API for managing a pet store","main":"client.js","scripts":{"test":"echo \"Error: no test specified\" && exit 1"},"keywords":["api","client","sdk"],"author":"","license":"MIT"}
+{"name":"swagger-petstore","version":"1.0.0","description":"A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification","main":"client.js","scripts":{"test":"echo \"Error: no test specified\" && exit 1"},"keywords":["api","client","sdk"],"author":"","license":"MIT"}

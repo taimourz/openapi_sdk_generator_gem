@@ -1,20 +1,17 @@
-# Pet
-class Pet
+# NewPet
+class Newpet
   attr_accessor :name
   attr_accessor :tag
-  attr_accessor :id
   
   def initialize(attributes = {})
     @name = attributes['name'] || attributes[:name]
     @tag = attributes['tag'] || attributes[:tag]
-    @id = attributes['id'] || attributes[:id]
   end
   
   def to_h
     {
       'name' => @name,
-      'tag' => @tag,
-      'id' => @id
+      'tag' => @tag
     }
   end
   
