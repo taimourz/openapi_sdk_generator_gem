@@ -16,7 +16,7 @@ RSpec.describe OpenapiSdkGenerator::Parser do
     end
     
     it 'extracts base URL' do
-      expect(parser.base_url).to eq('http://petstore.swagger.io/api')
+      expect(parser.base_url).to eq('https://petstore.swagger.io/v2')
     end
   end
   

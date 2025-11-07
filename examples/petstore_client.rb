@@ -35,7 +35,7 @@ puts
 
 puts "Example 2: Loading from URL"
 puts "-" * 60
-url = "https://raw.githubusercontent.com/kevindew/openapi3_parser/main/spec/support/examples/petstore-expanded.yaml"
+url = "https://raw.githubusercontent.com/taimourz/openapi_sdk_generator_gem/refs/heads/main/test/fixtures/petstore.yaml"
 puts "Fetching spec from: #{url}"
 puts
 
