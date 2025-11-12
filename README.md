@@ -109,4 +109,5 @@ my-sdk/
 
 - **GitHub Repository**: [github.com/taimourz/openapi_sdk_generator_gem](https://github.com/taimourz/openapi_sdk_generator_gem)
 - **RubyGems**: [rubygems.org/gems/openapi_sdk_generator_gem](https://rubygems.org/gems/openapi_sdk_generator_gem)
-- **Blog Tutorial**: [taimourz.github.io/portfolio/notes/openapi-sdk](https://taimourz.github.io/portfolio/notes/openapi-sdk)
+- **Blog Tutorial**: [taimourz.github.io/portfolio/notes/openapi-sdk](https://taimourz.github.io/portfolio/posts/openapi-sdk)
+
